@@ -4,7 +4,7 @@
 internal import CompilerPluginSupport
 internal import PackageDescription
 
-let name = "KMPWithMacro"
+let name = "KMPGenerateApplyMacro"
 
 let package = Package(
   name: name,

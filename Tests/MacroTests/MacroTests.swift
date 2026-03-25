@@ -3,8 +3,8 @@ internal import SwiftSyntaxMacros
 internal import SwiftSyntaxMacrosTestSupport
 internal import Testing
 
-#if canImport(KMPWithMacroMacros)
-  import KMPWithMacroMacros
+#if canImport(KMPGenerateApplyMacroMacros)
+  import KMPGenerateApplyMacroMacros
 
   let testMacros: [String: Macro.Type] = [
     "GenerateApply": GenerateApplyMacro.self

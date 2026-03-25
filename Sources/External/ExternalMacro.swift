@@ -1,6 +1,6 @@
 @attached(peer, names: named(apply))
 public macro GenerateApply() =
   #externalMacro(
-    module: "KMPWithMacroMacros",
+    module: "KMPGenerateApplyMacroMacros",
     type: "GenerateApplyMacro"
   )

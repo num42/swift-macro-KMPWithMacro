@@ -1,4 +1,4 @@
-# KMPWithMacro
+# KMPGenerateApplyMacro
 
 `@GenerateApply` is a Swift macro that generates an `apply(path:value:)` function from a `with(...)` function signature, routing `AnyKeyPath`-based property updates through `KTStateWrapper` key paths.
 
@@ -9,14 +9,14 @@
 
 ## Installation
 
-Add this package to your SwiftPM dependencies and import `KMPWithMacro` in the files where you use the macro.
+Add this package to your SwiftPM dependencies and import `KMPGenerateApplyMacro` in the files where you use the macro.
 
 ## Usage
 
 Attach `@GenerateApply` to a `with(...)` function inside an extension on your KMP state type:
 
 ```swift
-import KMPWithMacro
+import KMPGenerateApplyMacro
 
 extension ProfileState {
   @GenerateApply

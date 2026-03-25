@@ -2,7 +2,7 @@ internal import SwiftCompilerPlugin
 internal import SwiftSyntaxMacros
 
 @main
-struct KMPWithMacroPlugin: CompilerPlugin {
+struct KMPGenerateApplyMacroPlugin: CompilerPlugin {
   let providingMacros: [Macro.Type] = [
     GenerateApplyMacro.self
   ]

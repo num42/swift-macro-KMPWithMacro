@@ -27,9 +27,11 @@ public struct GenerateApplyMacro: PeerMacro {
     }
 
     // Get enclosing type name from lexical context
-    guard let extensionDecl = context.lexicalContext.first(
-      where: { $0.as(ExtensionDeclSyntax.self) != nil }
-    )?.as(ExtensionDeclSyntax.self) else {
+    guard
+      let extensionDecl = context.lexicalContext.first(
+        where: { $0.as(ExtensionDeclSyntax.self) != nil }
+      )?.as(ExtensionDeclSyntax.self)
+    else {
       throw Error.notInExtension
     }
 
