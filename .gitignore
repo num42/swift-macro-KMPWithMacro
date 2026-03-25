@@ -1,0 +1,4 @@
+.swiftpm
+Package.resolved
+.build
+.DS_Store

@@ -1,0 +1,9 @@
+extension MyState {
+  @GenerateApply
+  func with(
+    name: String? = nil,
+    count: Int? = nil
+  ) -> Self {
+    Self(name: name ?? self.name, count: count ?? self.count)
+  }
+}

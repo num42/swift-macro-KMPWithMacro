@@ -1,0 +1,12 @@
+extension MyState {
+  @GenerateApply
+  func with(
+    name: String? = nil,
+    trigger: (() -> Trigger?)? = nil
+  ) -> Self {
+    Self(
+      name: name ?? self.name,
+      trigger: trigger != nil ? trigger!() : self.trigger
+    )
+  }
+}
