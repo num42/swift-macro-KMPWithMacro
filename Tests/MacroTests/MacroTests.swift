@@ -8,7 +8,7 @@ internal import Testing
 
   let testMacros: [String: Macro.Type] = [
     "GenerateApply": GenerateApplyMacro.self,
-    "GenerateApplyFromProtocol": GenerateApplyFromProtocolMacro.self
+    "GenerateApplyFromProtocol": GenerateApplyFromProtocolMacro.self,
   ]
 
   @Suite
