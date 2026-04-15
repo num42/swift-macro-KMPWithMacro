@@ -1,5 +1,7 @@
-#generateApplyAndWithFromProtocol(for: MyState.self, protocol: MyStateApply.self) {
-  var consentGiven: Bool?
-  var isOnboarding: Bool?
-  var trigger: Trigger?
+extension MyState {
+  #generateApplyAndWithFromProtocol {
+    var consentGiven: Bool?
+    var isOnboarding: Bool?
+    var trigger: Trigger?
+  }
 }

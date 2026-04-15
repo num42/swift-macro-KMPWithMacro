@@ -5,10 +5,8 @@ public macro GenerateApply() =
     type: "GenerateApplyMacro"
   )
 
-@freestanding(declaration, names: arbitrary)
+@freestanding(declaration, names: named(with), named(apply))
 public macro generateApplyAndWithFromProtocol(
-  for stateType: Any.Type,
-  protocol protocolType: Any.Type,
   properties: () -> Void
 ) =
   #externalMacro(

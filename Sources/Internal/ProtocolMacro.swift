@@ -3,80 +3,28 @@ internal import SwiftSyntaxBuilder
 public import SwiftSyntaxMacros
 
 public struct GenerateApplyAndWithFromProtocolMacro: DeclarationMacro {
-  enum Error: Swift.Error, CustomStringConvertible {
-    case missingStateType
-    case missingProtocol
-
-    var description: String {
-      switch self {
-      case .missingStateType:
-        "#generateApplyAndWithFromProtocol requires a 'for:' argument with the state type, e.g. #generateApplyAndWithFromProtocol(for: MyState.self, protocol: MyStateApply.self)"
-      case .missingProtocol:
-        "#generateApplyAndWithFromProtocol requires a 'protocol:' argument, e.g. #generateApplyAndWithFromProtocol(for: MyState.self, protocol: MyStateApply.self)"
-      }
-    }
-  }
-
   public static func expansion(
     of node: some FreestandingMacroExpansionSyntax,
     in context: some MacroExpansionContext
   ) throws -> [DeclSyntax] {
-    // Extract arguments
-    let arguments = node.arguments
-
-    // Find 'for:' argument (state type)
-    guard
-      let forArg = arguments.first(where: { $0.label?.text == "for" }),
-      let memberAccess = forArg.expression.as(MemberAccessExprSyntax.self),
-      let base = memberAccess.base
-    else {
-      throw Error.missingStateType
+    // Get enclosing type name from lexical context
+    let typeName: String
+    if let extensionDecl = context.lexicalContext.first(
+      where: { $0.as(ExtensionDeclSyntax.self) != nil }
+    )?.as(ExtensionDeclSyntax.self) {
+      typeName = extensionDecl.extendedType.trimmedDescription
+    } else {
+      typeName = "Self"
     }
 
-    let typeName = base.trimmedDescription
-
-    // Find 'protocol:' argument (protocol type)
-    guard
-      let protocolArg = arguments.first(where: { $0.label?.text == "protocol" }),
-      let protocolMemberAccess = protocolArg.expression.as(MemberAccessExprSyntax.self),
-      let protocolBase = protocolMemberAccess.base
-    else {
-      throw Error.missingProtocol
+    // Get property declarations from the trailing closure
+    guard let trailingClosure = node.trailingClosure else {
+      return []
     }
 
-    let protocolName = protocolBase.trimmedDescription
-
-    // Find 'properties:' closure argument containing property declarations
-    guard
-      let propertiesArg = arguments.first(where: { $0.label?.text == "properties" }),
-      let closureExpr = propertiesArg.expression.as(ClosureExprSyntax.self)
-    else {
-      // Fall back to trailing closure
-      guard let trailingClosure = node.trailingClosure else {
-        return []
-      }
-      return try generateExtension(
-        typeName: typeName,
-        protocolName: protocolName,
-        from: trailingClosure.statements
-      )
-    }
-
-    return try generateExtension(
-      typeName: typeName,
-      protocolName: protocolName,
-      from: closureExpr.statements
-    )
-  }
-
-  private static func generateExtension(
-    typeName: String,
-    protocolName: String,
-    from statements: CodeBlockItemListSyntax
-  ) throws -> [DeclSyntax] {
     var properties: [(name: String, type: String)] = []
 
-    for statement in statements {
+    for statement in trailingClosure.statements {
       guard let varDecl = statement.item.as(VariableDeclSyntax.self) else { continue }
 
       for binding in varDecl.bindings {
@@ -87,7 +35,6 @@ public struct GenerateApplyAndWithFromProtocolMacro: DeclarationMacro {
 
         let name = pattern.identifier.text
 
-        // Strip trailing optional `?` to get the base type
         let baseType: String
         if let optionalType = typeAnnotation.type.as(OptionalTypeSyntax.self) {
           baseType = optionalType.wrappedType.trimmedDescription
@@ -119,28 +66,28 @@ public struct GenerateApplyAndWithFromProtocolMacro: DeclarationMacro {
 
     let fatalLine = #"fatalError("Unknown key path \(path)")"#
 
-    let extensionStr = """
-      extension \(typeName): \(protocolName) {
-        func with(
-      \(withParams)
-        ) -> Self {
-          Self(
-      \(withAssignments)
-          )
-        }
+    let withFunc: DeclSyntax = """
+      func with(
+      \(raw: withParams)
+      ) -> Self {
+        Self(
+      \(raw: withAssignments)
+        )
+      }
+      """
 
-        func apply(path: AnyKeyPath, value: Any) -> Self {
-          typealias State = \(typeName)
+    let applyFunc: DeclSyntax = """
+      func apply(path: AnyKeyPath, value: Any) -> Self {
+        typealias State = \(raw: typeName)
 
-          return switch path {
-      \(applyCases)
-          default:
-            \(fatalLine)
-          }
+        return switch path {
+      \(raw: applyCases)
+        default:
+          \(raw: fatalLine)
         }
       }
       """
 
-    return [DeclSyntax(stringLiteral: extensionStr)]
+    return [withFunc, applyFunc]
   }
 }

@@ -1,3 +1,5 @@
-#generateApplyAndWithFromProtocol(for: MyState.self, protocol: MyStateApply.self) {
-  var trigger: Trigger?
+extension MyState {
+  #generateApplyAndWithFromProtocol {
+    var trigger: Trigger?
+  }
 }
