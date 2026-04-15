@@ -1,0 +1,26 @@
+protocol MyStateApply {
+  var trigger: Trigger? { get }
+}
+
+extension MyState {
+  func with(
+    trigger: (() -> Trigger?)? = nil
+  ) -> Self {
+    Self(
+      trigger: trigger != nil ? trigger!() : self.trigger
+    )
+  }
+
+  func apply(path: AnyKeyPath, value: Any) -> Self {
+    typealias State = MyState
+
+    return switch path {
+    case \KTStateWrapper<State>.kt.trigger:
+      with(trigger: {
+              value as? Trigger
+          })
+    default:
+      fatalError("Unknown key path \(path)")
+    }
+  }
+}

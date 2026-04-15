@@ -1,0 +1,40 @@
+protocol MyStateApply {
+  var consentGiven: Bool? { get }
+  var isOnboarding: Bool? { get }
+  var trigger: Trigger? { get }
+}
+
+extension MyState {
+  func with(
+    consentGiven: (() -> Bool?)? = nil,
+    isOnboarding: (() -> Bool?)? = nil,
+    trigger: (() -> Trigger?)? = nil
+  ) -> Self {
+    Self(
+      consentGiven: consentGiven != nil ? consentGiven!() : self.consentGiven,
+      isOnboarding: isOnboarding != nil ? isOnboarding!() : self.isOnboarding,
+      trigger: trigger != nil ? trigger!() : self.trigger
+    )
+  }
+
+  func apply(path: AnyKeyPath, value: Any) -> Self {
+    typealias State = MyState
+
+    return switch path {
+    case \KTStateWrapper<State>.kt.consentGiven:
+      with(consentGiven: {
+              value as? Bool
+          })
+    case \KTStateWrapper<State>.kt.isOnboarding:
+      with(isOnboarding: {
+              value as? Bool
+          })
+    case \KTStateWrapper<State>.kt.trigger:
+      with(trigger: {
+              value as? Trigger
+          })
+    default:
+      fatalError("Unknown key path \(path)")
+    }
+  }
+}

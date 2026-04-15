@@ -7,7 +7,8 @@ internal import Testing
   import KMPGenerateApplyMacroMacros
 
   let testMacros: [String: Macro.Type] = [
-    "GenerateApply": GenerateApplyMacro.self
+    "GenerateApply": GenerateApplyMacro.self,
+    "GenerateApplyFromProtocol": GenerateApplyFromProtocolMacro.self
   ]
 
   @Suite
@@ -17,6 +18,14 @@ internal import Testing
     }
 
     @Test func generateApplyWithClosure() {
+      MacroTester.testMacro(macros: testMacros)
+    }
+
+    @Test func generateApplyFromProtocol() {
+      MacroTester.testMacro(macros: testMacros)
+    }
+
+    @Test func generateApplyFromProtocolMultipleProperties() {
       MacroTester.testMacro(macros: testMacros)
     }
   }

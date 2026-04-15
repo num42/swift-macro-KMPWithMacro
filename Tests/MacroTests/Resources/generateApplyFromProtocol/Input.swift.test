@@ -1,0 +1,4 @@
+@GenerateApplyFromProtocol(MyState.self)
+protocol MyStateApply {
+  var trigger: Trigger? { get }
+}
