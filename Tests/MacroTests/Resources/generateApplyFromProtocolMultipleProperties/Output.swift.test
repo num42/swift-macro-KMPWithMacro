@@ -1,10 +1,4 @@
-protocol MyStateApply {
-  var consentGiven: Bool? { get }
-  var isOnboarding: Bool? { get }
-  var trigger: Trigger? { get }
-}
-
-extension MyState {
+extension MyState: MyStateApply {
   func with(
     consentGiven: (() -> Bool?)? = nil,
     isOnboarding: (() -> Bool?)? = nil,

@@ -2,37 +2,32 @@ public import SwiftSyntax
 internal import SwiftSyntaxBuilder
 public import SwiftSyntaxMacros
 
-public struct GenerateApplyFromProtocolMacro: PeerMacro {
+public struct GenerateApplyAndWithFromProtocolMacro: DeclarationMacro {
   enum Error: Swift.Error, CustomStringConvertible {
-    case notAProtocol
     case missingStateType
+    case missingProtocol
 
     var description: String {
       switch self {
-      case .notAProtocol:
-        "@GenerateApplyFromProtocol can only be applied to a protocol"
       case .missingStateType:
-        "@GenerateApplyFromProtocol requires a state type argument, e.g. @GenerateApplyFromProtocol(MyState.self)"
+        "#generateApplyAndWithFromProtocol requires a 'for:' argument with the state type, e.g. #generateApplyAndWithFromProtocol(for: MyState.self, protocol: MyStateApply.self)"
+      case .missingProtocol:
+        "#generateApplyAndWithFromProtocol requires a 'protocol:' argument, e.g. #generateApplyAndWithFromProtocol(for: MyState.self, protocol: MyStateApply.self)"
       }
     }
   }
 
   public static func expansion(
-    of node: AttributeSyntax,
-    providingPeersOf declaration: some DeclSyntaxProtocol,
+    of node: some FreestandingMacroExpansionSyntax,
     in context: some MacroExpansionContext
   ) throws -> [DeclSyntax] {
-    guard declaration.is(ProtocolDeclSyntax.self) else {
-      throw Error.notAProtocol
-    }
+    // Extract arguments
+    let arguments = node.arguments
 
-    let protocolDecl = declaration.as(ProtocolDeclSyntax.self)!
-
-    // Extract state type name from macro argument: @GenerateApplyFromProtocol(MyState.self)
+    // Find 'for:' argument (state type)
     guard
-      let arguments = node.arguments?.as(LabeledExprListSyntax.self),
-      let firstArg = arguments.first,
-      let memberAccess = firstArg.expression.as(MemberAccessExprSyntax.self),
+      let forArg = arguments.first(where: { $0.label?.text == "for" }),
+      let memberAccess = forArg.expression.as(MemberAccessExprSyntax.self),
       let base = memberAccess.base
     else {
       throw Error.missingStateType
@@ -40,11 +35,49 @@ public struct GenerateApplyFromProtocolMacro: PeerMacro {
 
     let typeName = base.trimmedDescription
 
-    // Collect properties from protocol declaration
+    // Find 'protocol:' argument (protocol type)
+    guard
+      let protocolArg = arguments.first(where: { $0.label?.text == "protocol" }),
+      let protocolMemberAccess = protocolArg.expression.as(MemberAccessExprSyntax.self),
+      let protocolBase = protocolMemberAccess.base
+    else {
+      throw Error.missingProtocol
+    }
+
+    let protocolName = protocolBase.trimmedDescription
+
+    // Find 'properties:' closure argument containing property declarations
+    guard
+      let propertiesArg = arguments.first(where: { $0.label?.text == "properties" }),
+      let closureExpr = propertiesArg.expression.as(ClosureExprSyntax.self)
+    else {
+      // Fall back to trailing closure
+      guard let trailingClosure = node.trailingClosure else {
+        return []
+      }
+      return try generateExtension(
+        typeName: typeName,
+        protocolName: protocolName,
+        from: trailingClosure.statements
+      )
+    }
+
+    return try generateExtension(
+      typeName: typeName,
+      protocolName: protocolName,
+      from: closureExpr.statements
+    )
+  }
+
+  private static func generateExtension(
+    typeName: String,
+    protocolName: String,
+    from statements: CodeBlockItemListSyntax
+  ) throws -> [DeclSyntax] {
     var properties: [(name: String, type: String)] = []
 
-    for member in protocolDecl.memberBlock.members {
-      guard let varDecl = member.decl.as(VariableDeclSyntax.self) else { continue }
+    for statement in statements {
+      guard let varDecl = statement.item.as(VariableDeclSyntax.self) else { continue }
 
       for binding in varDecl.bindings {
         guard
@@ -53,14 +86,13 @@ public struct GenerateApplyFromProtocolMacro: PeerMacro {
         else { continue }
 
         let name = pattern.identifier.text
-        let type = typeAnnotation.type.trimmedDescription
 
         // Strip trailing optional `?` to get the base type
         let baseType: String
         if let optionalType = typeAnnotation.type.as(OptionalTypeSyntax.self) {
           baseType = optionalType.wrappedType.trimmedDescription
         } else {
-          baseType = type
+          baseType = typeAnnotation.type.trimmedDescription
         }
 
         properties.append((name: name, type: baseType))
@@ -88,7 +120,7 @@ public struct GenerateApplyFromProtocolMacro: PeerMacro {
     let fatalLine = #"fatalError("Unknown key path \(path)")"#
 
     let extensionStr = """
-      extension \(typeName) {
+      extension \(typeName): \(protocolName) {
         func with(
       \(withParams)
         ) -> Self {

@@ -1,6 +1,5 @@
-@GenerateApplyFromProtocol(MyState.self)
-protocol MyStateApply {
-  var consentGiven: Bool? { get }
-  var isOnboarding: Bool? { get }
-  var trigger: Trigger? { get }
+#generateApplyAndWithFromProtocol(for: MyState.self, protocol: MyStateApply.self) {
+  var consentGiven: Bool?
+  var isOnboarding: Bool?
+  var trigger: Trigger?
 }

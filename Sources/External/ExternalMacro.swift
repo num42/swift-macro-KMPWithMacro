@@ -5,9 +5,13 @@ public macro GenerateApply() =
     type: "GenerateApplyMacro"
   )
 
-@attached(peer, names: arbitrary)
-public macro GenerateApplyFromProtocol(_ stateType: Any.Type) =
+@freestanding(declaration, names: arbitrary)
+public macro generateApplyAndWithFromProtocol(
+  for stateType: Any.Type,
+  protocol protocolType: Any.Type,
+  properties: () -> Void
+) =
   #externalMacro(
     module: "KMPGenerateApplyMacroMacros",
-    type: "GenerateApplyFromProtocolMacro"
+    type: "GenerateApplyAndWithFromProtocolMacro"
   )

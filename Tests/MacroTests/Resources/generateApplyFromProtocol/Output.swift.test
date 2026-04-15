@@ -1,8 +1,4 @@
-protocol MyStateApply {
-  var trigger: Trigger? { get }
-}
-
-extension MyState {
+extension MyState: MyStateApply {
   func with(
     trigger: (() -> Trigger?)? = nil
   ) -> Self {
