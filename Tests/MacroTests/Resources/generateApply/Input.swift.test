@@ -1,1 +1,5 @@
-#GenerateApply(MyState.self, ("name", String.self), ("count", Int.self))
+#GenerateApply(
+  MyState.self,
+  (\MyState.name, String.self),
+  (\MyState.count, Int.self)
+)

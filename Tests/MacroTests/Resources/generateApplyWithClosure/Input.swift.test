@@ -1,1 +1,5 @@
-#GenerateApply(MyState.self, ("name", String.self), ("trigger", Trigger?.self))
+#GenerateApply(
+  MyState.self,
+  (\MyState.name, String.self),
+  (\MyState.trigger, Trigger?.self)
+)

@@ -12,7 +12,7 @@ public struct GenerateApplyMacro: DeclarationMacro {
       case .missingState:
         "#GenerateApply requires a state type name as its first argument"
       case .invalidProperty(let str):
-        "Invalid property format '\(str)'. Expected (\"name\", Type.self)."
+        "Invalid property format '\(str)'. Expected (\\Type.property, Type.self)."
       }
     }
   }
@@ -74,13 +74,14 @@ public struct GenerateApplyMacro: DeclarationMacro {
       let elements = Array(tuple.elements)
 
       guard
-        let stringLiteral = elements[0].expression.as(StringLiteralExprSyntax.self),
-        let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
+        let keyPath = elements[0].expression.as(KeyPathExprSyntax.self),
+        let lastComponent = keyPath.components.last,
+        let property = lastComponent.component.as(KeyPathPropertyComponentSyntax.self)
       else {
         throw Error.invalidProperty(arg.expression.trimmedDescription)
       }
 
-      let name = segment.content.text
+      let name = property.declName.baseName.text
 
       guard
         let memberAccess = elements[1].expression.as(MemberAccessExprSyntax.self),
