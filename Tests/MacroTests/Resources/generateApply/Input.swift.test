@@ -1,3 +1,1 @@
-@GenerateApply("name: String", "count: Int")
-extension MyState {
-}
+#GenerateApply(MyState.self, "name: String", "count: Int")

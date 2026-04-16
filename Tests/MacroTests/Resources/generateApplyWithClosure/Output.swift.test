@@ -1,21 +1,20 @@
 extension MyState {
+  func with(name: String? = nil, trigger: (() -> Trigger?)? = nil) -> Self {
+  Self(name: name ?? self.name, trigger: trigger != nil ? trigger!() : self.trigger)
+  }
 
-    func with(name: String? = nil, trigger: (() -> Trigger?)? = nil) -> Self {
-      Self(name: name ?? self.name, trigger: trigger != nil ? trigger!() : self.trigger)
-    }
+  func apply(path: AnyKeyPath, value: Any) -> Self {
+  typealias State = MyState
 
-    func apply(path: AnyKeyPath, value: Any) -> Self {
-      typealias State = MyState
-
-      return switch path {
-        case \KTStateWrapper<State>.kt.name:
-          with(name: value as? String)
-        case \KTStateWrapper<State>.kt.trigger:
-          with(trigger: {
-                  value as? Trigger
-              })
-      default:
-        fatalError("Unknown key path \(path)")
-      }
-    }
+  return switch path {
+    case \KTStateWrapper<State>.kt.name:
+      with(name: value as? String)
+    case \KTStateWrapper<State>.kt.trigger:
+      with(trigger: {
+              value as? Trigger
+          })
+  default:
+    fatalError("Unknown key path \(path)")
+  }
+  }
 }

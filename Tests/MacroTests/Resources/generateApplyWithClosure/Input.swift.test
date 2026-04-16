@@ -1,3 +1,1 @@
-@GenerateApply("name: String", "trigger: Trigger?")
-extension MyState {
-}
+#GenerateApply(MyState.self, "name: String", "trigger: Trigger?")

@@ -1,5 +1,5 @@
-@attached(member, names: named(with), named(apply))
-public macro GenerateApply(_ properties: String...) =
+@freestanding(declaration, names: arbitrary)
+public macro GenerateApply(_ state: Any.Type, _ properties: String...) =
   #externalMacro(
     module: "KMPGenerateApplyMacroMacros",
     type: "GenerateApplyMacro"

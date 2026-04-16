@@ -2,15 +2,15 @@ public import SwiftSyntax
 internal import SwiftSyntaxBuilder
 public import SwiftSyntaxMacros
 
-public struct GenerateApplyMacro: MemberMacro {
+public struct GenerateApplyMacro: DeclarationMacro {
   enum Error: Swift.Error, CustomStringConvertible {
-    case notAnExtension
+    case missingState
     case invalidProperty(String)
 
     var description: String {
       switch self {
-      case .notAnExtension:
-        "@GenerateApply must be applied to an extension"
+      case .missingState:
+        "#GenerateApply requires a state type name as its first argument"
       case .invalidProperty(let str):
         "Invalid property format '\(str)'. Expected 'name: Type'."
       }
@@ -28,30 +28,42 @@ public struct GenerateApplyMacro: MemberMacro {
   }
 
   public static func expansion(
-    of node: AttributeSyntax,
-    providingMembersOf declaration: some DeclGroupSyntax,
-    conformingTo protocols: [TypeSyntax],
+    of node: some FreestandingMacroExpansionSyntax,
     in context: some MacroExpansionContext
   ) throws -> [DeclSyntax] {
-    guard let extensionDecl = declaration.as(ExtensionDeclSyntax.self) else {
-      throw Error.notAnExtension
+    let arguments = Array(node.arguments)
+
+    guard
+      let firstArg = arguments.first,
+      let memberAccess = firstArg.expression.as(MemberAccessExprSyntax.self),
+      memberAccess.declName.baseName.text == "self",
+      let base = memberAccess.base
+    else {
+      throw Error.missingState
     }
 
-    let typeName = extensionDecl.extendedType.trimmedDescription
-    let properties = try parseProperties(from: node)
+    let typeName = base.trimmedDescription
+    let propertyArgs = arguments.dropFirst()
+    let properties = try parseProperties(from: propertyArgs)
 
     let withFunc = generateWithFunction(properties: properties)
     let applyFunc = generateApplyFunction(typeName: typeName, properties: properties)
 
-    return [DeclSyntax(stringLiteral: withFunc), DeclSyntax(stringLiteral: applyFunc)]
+    let extensionStr = """
+      extension \(typeName) {
+        \(withFunc)
+
+        \(applyFunc)
+      }
+      """
+
+    return [DeclSyntax(stringLiteral: extensionStr)]
   }
 
-  private static func parseProperties(from node: AttributeSyntax) throws -> [Property] {
-    guard let arguments = node.arguments?.as(LabeledExprListSyntax.self) else {
-      return []
-    }
-
-    return try arguments.map { arg in
+  private static func parseProperties(
+    from arguments: some Sequence<LabeledExprSyntax>
+  ) throws -> [Property] {
+    try arguments.map { arg in
       guard
         let stringLiteral = arg.expression.as(StringLiteralExprSyntax.self),
         let segment = stringLiteral.segments.first?.as(StringSegmentSyntax.self)
